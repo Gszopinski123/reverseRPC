@@ -3,6 +3,7 @@
 
 
 rrpc::RrpcServer::RrpcServer(int port) {
+    this->port = port;
     this->socket_fd = socket(AF_INET, SOCK_STREAM, NO_FLAGS);
     if (this->socket_fd == -1) {
         std::cerr << "Error Creating Socket" << std::endl;
@@ -28,7 +29,7 @@ rrpc::RrpcServer::~RrpcServer() {
 
 int rrpc::RrpcServer::connect() {
     socklen_t clilen = sizeof(clientAddress);
-    this->accept_fd = accept(this->accept_fd, (struct sockaddr *) &clientAddress, &clilen);
+    this->accept_fd = accept(this->socket_fd, (struct sockaddr *) &clientAddress, &clilen);
     if (this->accept_fd < 0) {
         return(-1);
     }
@@ -62,8 +63,27 @@ int rrpc::RrpcServer::send(char* funct) {
 
 }
 
-rrpc::RrpcClient::RrpcClient() {
+rrpc::RrpcClient::RrpcClient(char * address,int port) {
+    this->port = port;
+    this->socket_fd = socket(AF_INET, SOCK_STREAM, NO_FLAGS);
+    if (this->socket_fd < 0) {
+        std::cerr << "Socket Creation Failure" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    this->servAddress.sin_family = AF_INET;
+    this->servAddress.sin_port = htons(port);
+    this->servername = gethostbyname(address);
+    if (this->servername == NULL) {
+        std::cerr << "Error: no such host" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    memcpy(&this->servAddress.sin_addr.s_addr, servername->h_addr, servername->h_length);
+    if (connect(this->socket_fd, (struct sockaddr *)&this->servAddress, sizeof(servAddress)) < 0) {
+        std::cerr << "Failed Connection" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 rrpc::RrpcClient::~RrpcClient() {
-    
+    std::cout << "Closing Connection on port: " << this->port << std::endl;
+    close(this->socket_fd);
 }

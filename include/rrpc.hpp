@@ -14,12 +14,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <netdb.h>
 
 namespace rrpc {
     typedef struct msgHdr {
         int type;
         int size;
     } MsgHdr;
+    class RrpcArgument {
+        //change this to your specfic needs
+    };
     class RrpcServer {
         private:
             int port;
@@ -36,17 +40,20 @@ namespace rrpc {
     };
     class RrpcClient {
         public:
-            RrpcClient();
+            RrpcClient(char *address,int port);
             ~RrpcClient();
             int bind();
+            int run();
         private:
             std::unordered_map<std::string, std::function<void(rrpc::RrpcArgument)>> function_entries;
+            int socket_fd;
+            int port;
+            struct sockaddr_in servAddress;
+            struct hostent *servername;
     };
 
     
-    class RrpcArgument {
-        //change this to your specfic needs
-    };
+    
 }
 
 
