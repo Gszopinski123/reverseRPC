@@ -3,7 +3,7 @@
 
 
 rrpc::RrpcServer::RrpcServer(int port) {
-    this->socket_fd = socket(AF_INET, SOCK_STREAM,0);
+    this->socket_fd = socket(AF_INET, SOCK_STREAM, NO_FLAGS);
     if (this->socket_fd == -1) {
         std::cerr << "Error Creating Socket" << std::endl;
         exit(EXIT_FAILURE);
@@ -15,14 +15,51 @@ rrpc::RrpcServer::RrpcServer(int port) {
         std::cerr << "Error Binding Socket" << std::endl;
         exit(EXIT_FAILURE);
     }
-    if (listen(this->socket_fd, 0) == -1) {
+    if (listen(this->socket_fd, BACKGROUND_QUEUE) == -1) {
         std::cerr << "Error listening on socket" << std::endl;
         exit(EXIT_FAILURE);
     }
+    this->accept_fd = -1;
 } 
 rrpc::RrpcServer::~RrpcServer() {
     std::cout << "Closing Socket on port: " << this->port << std::endl;
     close(this->socket_fd);
+}
+
+int rrpc::RrpcServer::connect() {
+    socklen_t clilen = sizeof(clientAddress);
+    this->accept_fd = accept(this->accept_fd, (struct sockaddr *) &clientAddress, &clilen);
+    if (this->accept_fd < 0) {
+        return(-1);
+    }
+    return 0;
+}
+
+int rrpc::RrpcServer::send(char* funct) {
+    int functLen = strlen(funct);
+    int type = 1;
+    MsgHdr *msgHdr;
+    char *buffer = (char*)malloc((sizeof(char)*functLen)+(sizeof(int)*2));
+    size_t sizeOfBuffer = sizeof(char)*functLen + sizeof(int)*2;
+    msgHdr = (MsgHdr*)buffer;
+    msgHdr->size = functLen;
+    msgHdr->type = type;
+    char *recvBuffer = (char*)malloc(sizeof(char)*512);
+    size_t sizeOfrecvBuffer = 512;
+    memcpy(msgHdr+1,funct,functLen);
+    if (this->accept_fd < 0) {
+        return -1;
+    }
+    int bytes_sent = ::send(this->socket_fd,buffer,sizeOfBuffer,NO_FLAGS);
+    if (bytes_sent <= 0)
+        return -1;
+
+    int bytes_recv = recv(this->socket_fd,recvBuffer,sizeOfrecvBuffer, NO_FLAGS);
+    if (bytes_recv <= 0) {
+        return -1;
+    }
+    return 0;
+
 }
 
 rrpc::RrpcClient::RrpcClient() {
