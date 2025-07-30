@@ -5,12 +5,20 @@
 #include <iostream>
 #include <unordered_map>
 #include <functional>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 namespace rrpc {
     
     class RrpcServer {
+        private:
+            int port;
+            int socket_fd;
+            sockaddr_in servAddress;
         public:
-            RrpcServer();
+            RrpcServer(int port);
             ~RrpcServer();
             int send();
             int run();
