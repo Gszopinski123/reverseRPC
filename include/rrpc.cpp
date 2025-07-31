@@ -25,6 +25,7 @@ rrpc::RrpcServer::RrpcServer(int port) {
 rrpc::RrpcServer::~RrpcServer() {
     std::cout << "Closing Socket on port: " << this->port << std::endl;
     close(this->socket_fd);
+    close(this->accept_fd);
 }
 
 int rrpc::RrpcServer::connect() {
@@ -36,7 +37,7 @@ int rrpc::RrpcServer::connect() {
     return 0;
 }
 
-int rrpc::RrpcServer::send(char* funct) {
+int rrpc::RrpcServer::send(const char* funct) {
     int functLen = strlen(funct);
     int type = 1;
     MsgHdr *msgHdr;
@@ -51,11 +52,11 @@ int rrpc::RrpcServer::send(char* funct) {
     if (this->accept_fd < 0) {
         return -1;
     }
-    int bytes_sent = ::send(this->socket_fd,buffer,sizeOfBuffer,NO_FLAGS);
+    int bytes_sent = ::send(this->accept_fd,buffer,sizeOfBuffer,NO_FLAGS);
     if (bytes_sent <= 0)
         return -1;
 
-    int bytes_recv = recv(this->socket_fd,recvBuffer,sizeOfrecvBuffer, NO_FLAGS);
+    int bytes_recv = recv(this->accept_fd,recvBuffer,sizeOfrecvBuffer, NO_FLAGS);
     if (bytes_recv <= 0) {
         return -1;
     }
@@ -63,7 +64,7 @@ int rrpc::RrpcServer::send(char* funct) {
 
 }
 
-rrpc::RrpcClient::RrpcClient(char * address,int port) {
+rrpc::RrpcClient::RrpcClient(const char * address,int port) {
     this->port = port;
     this->socket_fd = socket(AF_INET, SOCK_STREAM, NO_FLAGS);
     if (this->socket_fd < 0) {
@@ -86,4 +87,32 @@ rrpc::RrpcClient::RrpcClient(char * address,int port) {
 rrpc::RrpcClient::~RrpcClient() {
     std::cout << "Closing Connection on port: " << this->port << std::endl;
     close(this->socket_fd);
+}
+
+int rrpc::RrpcClient::run() {
+    char * buffer = (char*)malloc(sizeof(char)*512);
+    size_t bufferlen = sizeof(char)*512;
+    int bytesRecv = recv(this->socket_fd,buffer,bufferlen, NO_FLAGS);
+    std::cout << "Hello?" << std::endl;
+    while (bytesRecv > 0) {
+        MsgHdr* msghdr = (MsgHdr*)buffer;
+        std::cout << "Size of function is: " << msghdr->size << std::endl;
+        std::cout << "Type is: " << msghdr->type << std::endl;
+        std::string functionName((char*)(msghdr+1),msghdr->size);
+        std::cout << "Function Name is: " << functionName << std::endl;
+        auto toBeCalled = function_entries.find(functionName);
+        if (toBeCalled != function_entries.end()) {
+            toBeCalled->second(rrpc::RrpcArgument{});
+        } else {
+            std::cout << "Function Not Found!" << std::endl;
+        }
+        bytesRecv = 0; // NEED TO FIX THIS PLACEHOLDER
+    }
+    return 0;
+}
+
+
+int rrpc::RrpcClient::bind(void (*function)(rrpc::RrpcArgument), const char* functionName) {
+    function_entries[std::string(functionName)] = function;
+    return 0;
 }

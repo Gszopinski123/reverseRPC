@@ -9,5 +9,6 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
     std::cout << "Connection Success" << std::endl;
+    myServer.send("Hello_World");
     return 0;
 } 

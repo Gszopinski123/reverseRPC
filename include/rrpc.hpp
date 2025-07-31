@@ -34,15 +34,15 @@ namespace rrpc {
         public:
             RrpcServer(int port);
             ~RrpcServer();
-            int send(char* funct);
-            int send(char* funct, int flags);
+            int send(const char* funct);
+            int send(const char* funct, int flags);
             int connect();
     };
     class RrpcClient {
         public:
-            RrpcClient(char *address,int port);
+            RrpcClient(const char *address,int port);
             ~RrpcClient();
-            int bind();
+            int bind(void (*function)(rrpc::RrpcArgument), const char* functionName);
             int run();
         private:
             std::unordered_map<std::string, std::function<void(rrpc::RrpcArgument)>> function_entries;
