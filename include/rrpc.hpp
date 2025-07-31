@@ -3,6 +3,8 @@
 #define RRPC_SERVER_H_
 #define NO_FLAGS 0
 #define BACKGROUND_QUEUE 0
+#define SEND_BACK 0
+#define RPC_CALL 1
 #include <iostream>
 #include <unordered_map>
 #include <functional>
@@ -18,11 +20,15 @@
 
 namespace rrpc {
     typedef struct msgHdr {
-        int type;
-        int size;
+        int type; // determines if this is an rpc call or send back // 1 -> rpc call 0 -> send back
+        int size; // Dependent on if this is a rpc call or send back 
     } MsgHdr;
     class RrpcArgument {
         //change this to your specfic needs
+    };
+    class RrpcReturn {
+        public:
+            bool isSuccess;
     };
     class RrpcServer {
         private:
@@ -34,7 +40,7 @@ namespace rrpc {
         public:
             RrpcServer(int port);
             ~RrpcServer();
-            int send(const char* funct);
+            RrpcReturn send(const char* funct, RrpcArgument argument);
             int send(const char* funct, int flags);
             int connect();
     };

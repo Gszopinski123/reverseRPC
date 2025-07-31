@@ -9,6 +9,7 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
     std::cout << "Connection Success" << std::endl;
-    myServer.send("Hello_World");
+    rrpc::RrpcArgument arg;
+    myServer.send("Hello_World",arg);
     return 0;
 } 
