@@ -113,7 +113,7 @@ rrpc::RrpcClient::~RrpcClient() {
 
 int rrpc::RrpcClient::run() {
     char * buffer = (char*)malloc(sizeof(MsgHdr)+sizeof(RrpcArgument)+sizeof(char)*512);
-    char * bufferBack = (char*)malloc(sizeof(msgHdr)+sizeof(rrpc::RrpcReturn));\
+    char * bufferBack = (char*)malloc(sizeof(msgHdr)+sizeof(rrpc::RrpcReturn));
     size_t bufferBackLen = sizeof(msgHdr)+sizeof(rrpc::RrpcReturn);
     size_t bufferlen = sizeof(char)*512+sizeof(MsgHdr)+sizeof(RrpcArgument);
     int bytesRecv = recv(this->socket_fd,buffer,bufferlen, NO_FLAGS);
