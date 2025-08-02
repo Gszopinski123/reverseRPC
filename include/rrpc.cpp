@@ -25,7 +25,8 @@ rrpc::RrpcServer::RrpcServer(int port) {
 rrpc::RrpcServer::~RrpcServer() {
     std::cout << "Closing Socket on port: " << this->port << std::endl;
     close(this->socket_fd);
-    close(this->accept_fd);
+    if (this->accept_fd > 0)
+        close(this->accept_fd);
 }
 
 int rrpc::RrpcServer::connect() {
@@ -53,23 +54,32 @@ rrpc::RrpcReturn rrpc::RrpcServer::send(const char* funct, RrpcArgument argument
     memcpy(msgHdr+1,funct,functLen);
     memcpy(((char*)(msgHdr+1))+functLen,&argument, sizeof(argument));
     if (this->accept_fd < 0) {
+        free(buffer);
+        free(recvBuffer);
         return premature_failure;
     }
     int bytes_sent = ::send(this->accept_fd,buffer,sizeOfBuffer,NO_FLAGS);
-    if (bytes_sent <= 0)
+    if (bytes_sent <= 0) {
+        free(buffer);
+        free(recvBuffer);
         return premature_failure;
+    }
 
     int bytes_recv = recv(this->accept_fd,recvBuffer,sizeOfrecvBuffer, NO_FLAGS);
     if (bytes_recv <= 0) {
+        free(buffer);
+        free(recvBuffer);
         return premature_failure;
     }
     MsgHdr* hdrBack = (MsgHdr*)recvBuffer;
     if (hdrBack->type != SEND_BACK) {
-        std::cout << "Wrong type!" << std::endl;
+        free(buffer);
+        free(recvBuffer);
         return premature_failure;
     }
     rrpc::RrpcReturn *returnBack = (rrpc::RrpcReturn*)(hdrBack+1);
-    std::cout << "Call was a success? " << returnBack->isSuccess << std::endl;
+    free(buffer);
+    free(recvBuffer);
     return *returnBack;
 
 }
@@ -98,12 +108,15 @@ rrpc::RrpcClient::RrpcClient(const char * address,int port) {
     }
 }
 rrpc::RrpcClient::~RrpcClient() {
-    std::cout << "Closing Connection on port: " << this->port << std::endl;
+    if (this->servername != NULL)
+        free(this->servername);
     close(this->socket_fd);
 }
 
 int rrpc::RrpcClient::run() {
     char * buffer = (char*)malloc(sizeof(MsgHdr)+sizeof(RrpcArgument)+sizeof(char)*512);
+    char * bufferBack = (char*)malloc(sizeof(msgHdr)+sizeof(rrpc::RrpcReturn));\
+    size_t bufferBackLen = sizeof(msgHdr)+sizeof(rrpc::RrpcReturn);
     size_t bufferlen = sizeof(char)*512+sizeof(MsgHdr)+sizeof(RrpcArgument);
     int bytesRecv = recv(this->socket_fd,buffer,bufferlen, NO_FLAGS);
     while (bytesRecv > 0) {
@@ -113,8 +126,6 @@ int rrpc::RrpcClient::run() {
         auto toBeCalled = function_entries.find(functionName);
         rrpc::RrpcReturn *sendback;
         MsgHdr* hdrSendBack;
-        char * bufferBack = (char*)malloc(sizeof(msgHdr)+sizeof(rrpc::RrpcReturn));
-        size_t bufferBackLen = sizeof(msgHdr)+sizeof(rrpc::RrpcReturn);
         hdrSendBack = (MsgHdr*)bufferBack;
         hdrSendBack->size = 0;
         hdrSendBack->type = SEND_BACK;
@@ -123,13 +134,14 @@ int rrpc::RrpcClient::run() {
             toBeCalled->second(rrpc::RrpcArgument{});
             sendback->isSuccess = true;
         } else {
-            std::cout << "Function Not Found!" << std::endl;
             sendback->isSuccess = false;
         }
         send(this->socket_fd,bufferBack,bufferBackLen,NO_FLAGS);
         memset(buffer, 0, bufferlen);
         bytesRecv = recv(this->socket_fd, buffer, bufferlen,NO_FLAGS);
     }
+    free(buffer);
+    free(bufferBack);
     return 0;
 }
 
