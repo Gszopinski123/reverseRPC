@@ -85,7 +85,7 @@ rrpc::RrpcReturn rrpc::RrpcServer::send(const char* funct, RrpcArgument argument
 }
 rrpc::RrpcReturn rrpc::RrpcServer::send(const char* funct, RrpcArgument argument, int flags) {
     //connect to database and see if user is authorized
-    this->send(funct,argument);
+    return this->send(funct,argument);
 }
 rrpc::RrpcClient::RrpcClient(const char * address,int port) {
     this->port = port;
