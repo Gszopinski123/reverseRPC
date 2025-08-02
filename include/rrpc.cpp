@@ -77,10 +77,10 @@ rrpc::RrpcReturn rrpc::RrpcServer::send(const char* funct, RrpcArgument argument
         free(recvBuffer);
         return premature_failure;
     }
-    rrpc::RrpcReturn *returnBack = (rrpc::RrpcReturn*)(hdrBack+1);
+    rrpc::RrpcReturn returnBack = *(rrpc::RrpcReturn*)(hdrBack+1);
     free(buffer);
     free(recvBuffer);
-    return *returnBack;
+    return returnBack;
 
 }
 rrpc::RrpcReturn rrpc::RrpcServer::send(const char* funct, RrpcArgument argument, int flags) {
