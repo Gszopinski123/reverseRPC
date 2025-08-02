@@ -17,6 +17,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
+enum privilege {
+    OPEN,
+    RESTRICTED,
+    GUARDED
+};
 
 namespace rrpc {
     typedef struct msgHdr {
@@ -24,6 +29,7 @@ namespace rrpc {
         int size; // Dependent on if this is a rpc call or send back 
     } MsgHdr;
     class RrpcArgument {
+        enum privilege level;
         //change this to your specfic needs
     };
     class RrpcReturn {
@@ -41,7 +47,7 @@ namespace rrpc {
             RrpcServer(int port);
             ~RrpcServer();
             RrpcReturn send(const char* funct, RrpcArgument argument);
-            int send(const char* funct, int flags);
+            RrpcReturn send(const char* funct, RrpcArgument argument, int flags);
             int connect();
     };
     class RrpcClient {
@@ -57,11 +63,5 @@ namespace rrpc {
             struct sockaddr_in servAddress;
             struct hostent *servername;
     };
-
-    
-    
 }
-
-
-
 #endif
