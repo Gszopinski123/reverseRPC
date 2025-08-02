@@ -131,7 +131,7 @@ int rrpc::RrpcClient::run() {
         hdrSendBack->type = SEND_BACK;
         sendback = (rrpc::RrpcReturn*)(hdrSendBack+1);
         if (toBeCalled != function_entries.end()) {
-            toBeCalled->second(rrpc::RrpcArgument{});
+            toBeCalled->second(*argument);
             sendback->isSuccess = true;
         } else {
             sendback->isSuccess = false;
