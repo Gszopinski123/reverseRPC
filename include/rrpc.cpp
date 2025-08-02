@@ -108,8 +108,6 @@ rrpc::RrpcClient::RrpcClient(const char * address,int port) {
     }
 }
 rrpc::RrpcClient::~RrpcClient() {
-    if (this->servername != NULL)
-        free(this->servername);
     close(this->socket_fd);
 }
 
